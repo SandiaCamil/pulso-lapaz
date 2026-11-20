@@ -14,6 +14,8 @@ function aObjectId(id) {
     return new ObjectId(id);
 }
 
+const CAMPOS_PROTEGIDOS = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona', 'confirmaciones', 'estado', 'creado'];
+
 class AlertaService {
     get coleccion() {
         return database.coleccion('alertas');
@@ -63,21 +65,33 @@ class AlertaService {
         return alerta;
     }
 
-  //UPDATE
+    // UPDATE (edita campos, agrega nuevos y quita los indicados en _quitar)
     async actualizar(id, cambios) {
         const _id = aObjectId(id);
         const existente = await this.obtener(id);
 
-        const { _id: _ignorado, creado: _c, ...permitidos } = cambios || {};
-        if (!Object.keys(permitidos).length) throw errorHttp(400, 'No hay campos para actualizar');
+        const { _id: _i, creado: _c, tipo: _t, _quitar, ...permitidos } = cambios || {};
+        const quitar = (Array.isArray(_quitar) ? _quitar : [])
+        .filter(k => typeof k === 'string' && !CAMPOS_PROTEGIDOS.includes(k));
 
-        const alerta = AlertaFactory.crear({ ...existente, ...permitidos });
+        if (!Object.keys(permitidos).length && !quitar.length) {
+        throw errorHttp(400, 'No hay cambios para guardar');
+        }
+
+        const base = { ...existente, ...permitidos };
+        quitar.forEach(k => delete base[k]);
+
+        const alerta = AlertaFactory.crear(base);
         const errores = alerta.validar();
         if (errores.length) throw errorHttp(400, 'Datos inválidos', errores);
 
         const doc = alerta.toDocumento();
         delete doc._id;
-        await this.coleccion.updateOne({ _id }, { $set: doc });
+
+        const operacion = { $set: doc };
+        if (quitar.length) operacion.$unset = Object.fromEntries(quitar.map(k => [k, '']));
+
+        await this.coleccion.updateOne({ _id }, operacion);
         return { _id, ...doc };
     }
 
