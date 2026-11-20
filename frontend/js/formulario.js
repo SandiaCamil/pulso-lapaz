@@ -1,11 +1,56 @@
+const esMovil = () => window.matchMedia('(max-width: 640px)').matches;
+
 const Formulario = {
     punto: null,
     marcador: null,
 
     abrir() {
         this.punto = null;
+        if (this.marcador) { this.marcador.remove(); this.marcador = null; }
+        if (esMovil()) this.elegirUbicacion();
+        else this.mostrarFormulario();
+    },
+
+    elegirUbicacion() {
+        document.getElementById('panel').classList.remove('abierto');
+        document.body.classList.add('eligiendo');
+
+        const aviso = document.getElementById('aviso-mapa');
+        aviso.innerHTML = `
+        <p id="aviso-texto">👆 Toca el mapa para marcar el lugar</p>
+        <div class="aviso-botones">
+            <button type="button" id="a-gps" class="btn sec">📍 Mi ubicación</button>
+            <button type="button" id="a-cancel" class="btn sec">Cancelar</button>
+            <button type="button" id="a-ok" class="btn" disabled>Continuar</button>
+        </div>`;
+        aviso.classList.add('visible');
+
+        const ok = document.getElementById('a-ok');
+        if (this.punto) {
+        ok.disabled = false;
+        document.getElementById('aviso-texto').textContent = '✅ Ubicación marcada. Toca otro punto para moverla.';
+        }
+
+        document.getElementById('a-gps').onclick = () => this.usarGps();
+        document.getElementById('a-cancel').onclick = () => this.limpiarMarcador();
+        ok.onclick = () => { this.ocultarAviso(); this.mostrarFormulario(); };
+        Mapa.onSeleccionPunto = ll => this.setPunto(ll.lat, ll.lng);
+    },
+
+    ocultarAviso() {
+        document.getElementById('aviso-mapa').classList.remove('visible');
+        document.body.classList.remove('eligiendo');
+    },
+
+    mostrarFormulario() {
         const opciones = Object.entries(TIPOS)
         .map(([k, t]) => `<option value="${k}">${t.icono} ${t.etiqueta}</option>`).join('');
+
+        const ubicacion = esMovil()
+        ? `<span id="f-coords"></span>
+            <button type="button" id="f-cambiar" class="btn sec">📍 Cambiar ubicación</button>`
+        : `<button type="button" id="f-gps" class="btn sec">📍 Usar mi ubicación</button>
+            <span id="f-coords">O toca el mapa para marcar el lugar</span>`;
 
         Panel.abrir(`
         <h2>Nuevo reporte</h2>
@@ -23,18 +68,25 @@ const Formulario = {
             </label>
             <label>Zona<input id="f-zona" type="text" maxlength="60" placeholder="Ej. Sopocachi"></label>
             <div id="f-extra"></div>
-            <div class="ubicacion">
-            <button type="button" id="f-gps" class="btn sec">📍 Usar mi ubicación</button>
-            <span id="f-coords">O toca el mapa para marcar el lugar</span>
-            </div>
+            <div class="ubicacion">${ubicacion}</div>
             <button type="submit" class="btn">Publicar alerta</button>
         </form>
         `);
 
         this.dibujarExtras();
+        this.actualizarCoords();
+
         document.getElementById('f-tipo').addEventListener('change', () => this.dibujarExtras());
-        document.getElementById('f-gps').addEventListener('click', () => this.usarGps());
         document.getElementById('form-alerta').addEventListener('submit', e => this.enviar(e));
+
+        const gps = document.getElementById('f-gps');
+        if (gps) gps.addEventListener('click', () => this.usarGps());
+
+        const cambiar = document.getElementById('f-cambiar');
+        if (cambiar) cambiar.addEventListener('click', () => {
+        document.getElementById('panel').classList.remove('abierto'); // sin borrar el punto
+        this.elegirUbicacion();
+        });
 
         Mapa.onSeleccionPunto = ll => {
         if (document.getElementById('form-alerta')) this.setPunto(ll.lat, ll.lng);
@@ -54,6 +106,11 @@ const Formulario = {
         document.getElementById('f-extra').innerHTML = html;
     },
 
+    actualizarCoords() {
+        const c = document.getElementById('f-coords');
+        if (c && this.punto) c.textContent = `Ubicación: ${this.punto.lat.toFixed(5)}, ${this.punto.lng.toFixed(5)}`;
+    },
+
     setPunto(lat, lng) {
         this.punto = { lat, lng };
 
@@ -65,13 +122,20 @@ const Formulario = {
             className: 'punto-nuevo-wrap',
             html: '<div class="punto-nuevo"></div>',
             iconSize: [26, 26],
-            iconAnchor: [13, 13]      // el centro del punto queda exactamente donde tocaste
+            iconAnchor: [13, 13]
             }),
-            interactive: false          // permite volver a tocar el mapa para mover el punto
+            interactive: false
         }).addTo(Mapa.map);
         }
 
-        document.getElementById('f-coords').textContent = `Ubicación: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        this.actualizarCoords();
+
+        //Si estamos en el paso 1 del celular, habilita "Continuar"
+        const ok = document.getElementById('a-ok');
+        if (ok) {
+        ok.disabled = false;
+        document.getElementById('aviso-texto').textContent = '✅ Ubicación marcada. Toca otro punto para moverla.';
+        }
     },
 
     usarGps() {
@@ -119,5 +183,6 @@ const Formulario = {
         if (this.marcador) { this.marcador.remove(); this.marcador = null; }
         this.punto = null;
         Mapa.onSeleccionPunto = null;
+        this.ocultarAviso();
     }
 };
