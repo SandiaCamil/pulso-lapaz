@@ -1,0 +1,21 @@
+{
+    "name": "pulso-lapaz-backend",
+    "version": "1.0.0",
+    "description": "API REST de Pulso de La Paz con MongoDB Atlas",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js",
+        "indices": "node src/scripts/crearIndices.js",
+        "seed": "node src/scripts/seed.js"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cors": "^2.8.6",
+        "dotenv": "^18.0.10",
+        "express": "^5.3.0",
+        "jsonwebtoken": "^9.0.3",
+        "mongodb": "^7.9.1"
+    }
+}
