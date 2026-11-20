@@ -4,15 +4,18 @@ const express = require('express');
 const cors = require('cors');
 const database = require('./src/config/Database');
 const alertasRoutes = require('./src/routes/alertas.routes');
+const authRoutes = require('./src/routes/auth.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+app.set('trust proxy', 1);
 app.use(express.json());
 
 app.get('/api/salud', (req, res) => res.json({ estado: 'ok', base: database.nombreBD }));
 app.use('/api/alertas', alertasRoutes);
+app.use('/api/auth', authRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
