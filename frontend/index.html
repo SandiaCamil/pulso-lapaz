@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pulso de La Paz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+    <link rel="stylesheet" href="css/style.css">
+    
+</head>
+<body>
+    <header class="barra">
+        <h1>🗺️ Pulso de La Paz</h1>
+        <div class="filtros">
+        <select id="filtro-tipo"><option value="">Todos los tipos</option></select>
+        <select id="filtro-grav">
+            <option value="">Toda gravedad</option>
+            <option value="baja">Baja</option>
+            <option value="media">Media</option>
+            <option value="alta">Alta</option>
+        </select>
+        <span id="contador"></span>
+        </div>
+    </header>
+
+    <div id="mapa"></div>
+
+    <div class="acciones">
+        <button id="btn-cercanas" class="btn sec">📍 Cerca de mí</button>
+        <button id="btn-nuevo" class="btn">➕ Reportar</button>
+    </div>
+
+    <aside id="panel">
+        <button id="panel-cerrar" aria-label="Cerrar">✕</button>
+        <div id="panel-contenido"></div>
+    </aside>
+
+    <div id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/mapa.js"></script>
+    <script src="js/formulario.js"></script>
+    <script src="js/detalle.js"></script>
+    <script src="js/cercanas.js"></script>
+</body>
+</html>
