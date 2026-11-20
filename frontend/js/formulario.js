@@ -56,8 +56,21 @@ const Formulario = {
 
     setPunto(lat, lng) {
         this.punto = { lat, lng };
-        if (this.marcador) this.marcador.setLatLng([lat, lng]);
-        else this.marcador = L.circleMarker([lat, lng], { radius: 11, color: '#ffffff', weight: 2, fillOpacity: 0 }).addTo(Mapa.map);
+
+        if (this.marcador) {
+        this.marcador.setLatLng([lat, lng]);
+        } else {
+        this.marcador = L.marker([lat, lng], {
+            icon: L.divIcon({
+            className: 'punto-nuevo-wrap',
+            html: '<div class="punto-nuevo"></div>',
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]      // el centro del punto queda exactamente donde tocaste
+            }),
+            interactive: false          // permite volver a tocar el mapa para mover el punto
+        }).addTo(Mapa.map);
+        }
+
         document.getElementById('f-coords').textContent = `Ubicación: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     },
 
