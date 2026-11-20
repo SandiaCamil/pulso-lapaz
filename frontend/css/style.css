@@ -83,3 +83,5 @@ select, input, textarea {
 }
 
 .leaflet-container { background: var(--fondo); }
+
+@keyframes latido { 0%, 100% { fill-opacity: .6; } 50% { fill-opacity: .95; } }

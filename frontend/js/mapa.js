@@ -27,7 +27,8 @@ const Mapa = {
         const t = TIPOS[a.tipo] || { icono: '📍' };
 
         const marcador = L.circleMarker([lat, lng], {
-            radius: radio, color, fillColor: color, fillOpacity: 0.55, weight: 2, className: 'punto-alerta'
+            radius: radio, color: '#ffffff', weight: 2,
+            fillColor: color, fillOpacity: 0.85, className: 'punto-alerta'
         }).addTo(this.capa);
 
         marcador.bindTooltip(`${t.icono} ${esc(a.descripcion)}`);
