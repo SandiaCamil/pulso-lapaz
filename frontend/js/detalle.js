@@ -17,6 +17,8 @@ const Detalle = {
         .map(([k, v]) => `<li><b>${esc(k.replace(/_/g, ' '))}:</b> ${esc(valorLegible(v))}</li>`)
         .join('');
 
+        const admin = Sesion.activa();
+
         Panel.abrir(`
         <h2>${t.icono} ${esc(t.etiqueta)}</h2>
         <span class="etiqueta" style="background:${color}">Gravedad ${esc(a.gravedad)}</span>
@@ -25,18 +27,22 @@ const Detalle = {
         ${extras ? `<ul class="extras">${extras}</ul>` : ''}
         <div class="botones">
             <button class="btn" id="d-conf">👍 Confirmar</button>
+            ${admin ? `
             <button class="btn sec" id="d-res">✔️ Resuelta</button>
             <button class="btn sec" id="d-edit">✏️ Editar</button>
-            <button class="btn peligro" id="d-del">🗑️ Eliminar</button>
+            <button class="btn peligro" id="d-del">🗑️ Eliminar</button>` : ''}
         </div>
         `);
 
         document.getElementById('d-conf').onclick = () => this.accion(() => Api.confirmar(a._id), 'Gracias por confirmar', a._id);
-        document.getElementById('d-res').onclick = () => this.accion(() => Api.actualizar(a._id, { estado: 'resuelto' }), 'Alerta marcada como resuelta');
-        document.getElementById('d-edit').onclick = () => this.editar(a);
-        document.getElementById('d-del').onclick = () => {
-        if (confirm('¿Eliminar esta alerta?')) this.accion(() => Api.eliminar(a._id), 'Alerta eliminada');
-        };
+
+        if (admin) {
+            document.getElementById('d-res').onclick = () => this.accion(() => Api.actualizar(a._id, { estado: 'resuelto' }), 'Alerta marcada como resuelta');
+            document.getElementById('d-edit').onclick = () => this.editar(a);
+            document.getElementById('d-del').onclick = () => {
+                if (confirm('¿Eliminar esta alerta?')) this.accion(() => Api.eliminar(a._id), 'Alerta eliminada');
+            };
+        }
     },
 
     //Ejecuta la accion; si se pasa id, vuelve a mostrar el detalle actualizado
