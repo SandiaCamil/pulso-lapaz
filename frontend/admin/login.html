@@ -11,12 +11,17 @@
 <body class="admin-body">
     <main class="login">
         <form id="form-login" class="tarjeta">
-        <h1>Panel de administración</h1>
-        <p class="meta">Pulso de La Paz</p>
-        <label>Usuario<input id="usuario" autocomplete="username" required></label>
-        <label>Contraseña<input id="password" type="password" autocomplete="current-password" required></label>
-        <button class="btn" type="submit" id="btn-login">Ingresar</button>
-        <a href="../index.html" class="enlace-volver">← Volver al mapa</a>
+            <h1>Panel de administración</h1>
+            <p class="meta">Pulso de La Paz</p>
+            <label>Usuario<input id="usuario" autocomplete="username" required></label>
+            <label>Contraseña
+                <div class="campo-clave">
+                    <input id="password" type="password" autocomplete="current-password" required>
+                    <button type="button" id="ver-clave" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁️</button>
+                </div>
+            </label>
+            <button class="btn" type="submit" id="btn-login">Ingresar</button>
+            <a href="../index.html" class="enlace-volver">← Volver al mapa</a>
         </form>
     </main>
     <div id="toast"></div>
@@ -26,21 +31,30 @@
     <script>
         if (Sesion.activa()) location.replace('alertas.html');
 
+        document.getElementById('ver-clave').addEventListener('click', () => {
+            const campo = document.getElementById('password');
+            const boton = document.getElementById('ver-clave');
+            const mostrar = campo.type === 'password';
+            campo.type = mostrar ? 'text' : 'password';
+            boton.textContent = mostrar ? '🙈' : '👁️';
+            boton.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+        });
+
         document.getElementById('form-login').addEventListener('submit', async e => {
-        e.preventDefault();
-        const boton = document.getElementById('btn-login');
-        boton.disabled = true;
-        try {
-            const sesion = await Api.login(
-            document.getElementById('usuario').value,
-            document.getElementById('password').value
-            );
-            Sesion.guardar(sesion);
-            location.href = 'alertas.html';
-        } catch (err) {
-            toast(err.message, true);
-            boton.disabled = false;
-        }
+            e.preventDefault();
+            const boton = document.getElementById('btn-login');
+            boton.disabled = true;
+            try {
+                const sesion = await Api.login(
+                    document.getElementById('usuario').value,
+                    document.getElementById('password').value
+                );
+                Sesion.guardar(sesion);
+                location.href = 'alertas.html';
+            } catch (err) {
+                toast(err.message, true);
+                boton.disabled = false;
+            }
         });
     </script>
 </body>

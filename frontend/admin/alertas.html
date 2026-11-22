@@ -12,11 +12,9 @@
     <header class="barra">
         <h1>Panel admin</h1>
         <nav class="nav">
-        <a href="alertas.html" class="activo">Alertas</a>
-        <a href="tipos.html">Tipos</a>
-        <a href="configuracion.html">Configuración</a>
-        <a href="../index.html">Mapa</a>
-        <button id="btn-salir" class="enlace">Salir</button>
+            <a href="alertas.html" class="activo">📋 Alertas</a>
+            <a href="../index.html">🗺️ Mapa</a>
+            <button id="btn-salir" class="enlace">Salir</button>
         </nav>
     </header>
 
@@ -24,26 +22,27 @@
         <section class="resumen" id="resumen"></section>
 
         <div class="herramientas">
-        <input id="q" type="search" placeholder="Buscar por descripción, zona o tipo...">
-        <select id="f-tipo"><option value="">Todos los tipos</option></select>
-        <select id="f-estado">
-            <option value="">Todos los estados</option>
-            <option value="activo">Activas</option>
-            <option value="resuelto">Resueltas</option>
-        </select>
-        <button id="btn-recargar" class="btn sec">↻ Actualizar</button>
+            <input id="q" type="search" placeholder="Buscar por descripción, zona o tipo...">
+            <select id="f-tipo"><option value="">Todos los tipos</option></select>
+            <select id="f-estado">
+                <option value="">Todos los estados</option>
+                <option value="activo">Activas</option>
+                <option value="resuelto">Resueltas</option>
+                <option value="descartado">Descartadas</option>
+            </select>
+            <button id="btn-recargar" class="btn sec">↻ Actualizar</button>
         </div>
 
         <div class="tabla-wrap">
-        <table>
-            <thead>
-            <tr>
-                <th>Tipo</th><th>Descripción</th><th>Gravedad</th><th>Zona</th>
-                <th>Estado</th><th>Conf.</th><th>Creada</th><th></th>
-            </tr>
-            </thead>
-            <tbody id="filas"></tbody>
-        </table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th><th>Descripción</th><th>Gravedad</th><th>Zona</th>
+                        <th>Estado</th><th>Votos</th><th>Creada</th><th></th>
+                    </tr>
+                </thead>
+                <tbody id="filas"></tbody>
+            </table>
         </div>
     </main>
 

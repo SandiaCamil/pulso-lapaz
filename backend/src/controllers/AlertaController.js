@@ -9,18 +9,18 @@ class AlertaController {
         const status = err.status || 500;
         if (status === 500) console.error(err);
         res.status(status).json({
-        error: status === 500 ? 'Error interno del servidor' : err.message,
-        detalles: err.detalles
+            error: status === 500 ? 'Error interno del servidor' : err.message,
+            detalles: err.detalles
         });
     }
 
     listar = async (req, res) => {
         try {
-        const { lat, lng, radio, ...filtros } = req.query;
-        const datos = (lat && lng)
-            ? await this.service.cercanas(lng, lat, radio)
-            : await this.service.listar(filtros);
-        res.json(datos);
+            const { lat, lng, radio, ...filtros } = req.query;
+            const datos = (lat && lng)
+                ? await this.service.cercanas(lng, lat, radio)
+                : await this.service.listar(filtros);
+            res.json(datos);
         } catch (err) { this._error(res, err); }
     };
 
@@ -39,9 +39,11 @@ class AlertaController {
         catch (err) { this._error(res, err); }
     };
 
-    confirmar = async (req, res) => {
-        try { res.json(await this.service.confirmar(req.params.id)); }
-        catch (err) { this._error(res, err); }
+    votar = async (req, res) => {
+        try {
+            const { voto, votante } = req.body || {};
+            res.json(await this.service.votar(req.params.id, voto, votante));
+        } catch (err) { this._error(res, err); }
     };
 
     eliminar = async (req, res) => {

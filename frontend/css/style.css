@@ -115,3 +115,15 @@ select, input, textarea {
 
 .eligiendo .acciones { display: none; }
 .eligiendo .leaflet-container { cursor: crosshair; }
+
+/* Votos únicos y acceso admin */
+.votos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 6px; }
+.votos .btn { padding: 11px 8px; font-size: .85rem; box-shadow: none; border-radius: 10px; }
+.voto-hecho { margin: 14px 0 6px; padding: 10px 12px; background: var(--fondo); border: 1px solid var(--borde); border-radius: 10px; }
+
+.enlace-admin {
+    color: var(--texto); text-decoration: none; font-size: .82rem; white-space: nowrap;
+    padding: 6px 10px; border: 1px solid var(--borde); border-radius: 8px;
+}
+.enlace-admin:hover { border-color: var(--acento); }
+@media (max-width: 640px) { .enlace-admin .txt { display: none; } }

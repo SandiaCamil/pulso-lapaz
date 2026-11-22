@@ -7,42 +7,42 @@ const TIPOS = {
     bloqueo: {
         icono: '🚧', etiqueta: 'Bloqueo',
         campos: [
-        { n: 'ruta_alterna', l: 'Ruta alterna', t: 'text' },
-        { n: 'duracion_estimada', l: 'Duración estimada', t: 'text' }
+            { n: 'ruta_alterna', l: 'Ruta alterna', t: 'text' },
+            { n: 'duracion_estimada', l: 'Duración estimada', t: 'text' }
         ]
     },
     marcha: {
         icono: '📢', etiqueta: 'Marcha',
         campos: [
-        { n: 'organizador', l: 'Organizador', t: 'text' },
-        { n: 'recorrido', l: 'Recorrido', t: 'text' }
+            { n: 'organizador', l: 'Organizador', t: 'text' },
+            { n: 'recorrido', l: 'Recorrido', t: 'text' }
         ]
     },
     deslizamiento: {
         icono: '⛰️', etiqueta: 'Deslizamiento',
         campos: [
-        { n: 'zona_de_riesgo', l: 'Zona de riesgo', t: 'text' },
-        { n: 'calle_habilitada', l: '¿Calle habilitada?', t: 'boolean' }
+            { n: 'zona_de_riesgo', l: 'Zona de riesgo', t: 'text' },
+            { n: 'calle_habilitada', l: '¿Calle habilitada?', t: 'boolean' }
         ]
     },
     accidente: {
         icono: '🚗', etiqueta: 'Accidente',
         campos: [
-        { n: 'heridos', l: 'Heridos', t: 'number' },
-        { n: 'ambulancia_en_camino', l: '¿Ambulancia en camino?', t: 'boolean' }
+            { n: 'heridos', l: 'Heridos', t: 'number' },
+            { n: 'ambulancia_en_camino', l: '¿Ambulancia en camino?', t: 'boolean' }
         ]
     },
     calle_cerrada: {
         icono: '🕳️', etiqueta: 'Calle cerrada',
         campos: [
-        { n: 'motivo', l: 'Motivo', t: 'text' },
-        { n: 'fecha_reapertura', l: 'Reapertura estimada', t: 'text' }
+            { n: 'motivo', l: 'Motivo', t: 'text' },
+            { n: 'fecha_reapertura', l: 'Reapertura estimada', t: 'text' }
         ]
     }
 };
 
-//Campos que ya tienen su lugar en la pantalla; el resto se muestra automáticamente
-const CAMPOS_BASE = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona', 'confirmaciones', 'estado', 'creado'];
+// Campos que ya tienen su lugar en la pantalla; el resto se muestra automáticamente
+const CAMPOS_BASE = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona', 'confirmaciones', 'desmentidos', 'votantes', 'estado', 'creado'];
 
 function esc(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, c => (

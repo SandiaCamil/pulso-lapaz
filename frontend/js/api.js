@@ -11,13 +11,39 @@ const Sesion = {
         const t = this.token();
         if (!t) return false;
         try {
-        const p = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-        return p.exp * 1000 > Date.now();
+            const p = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            return p.exp * 1000 > Date.now();
         } catch { return false; }
     }
-    };
+};
 
-    const Api = {
+// Identificador anónimo de este navegador y registro local de sus votos
+const Votante = {
+    id() {
+        try {
+            let v = localStorage.getItem('plp_votante');
+            if (!v) {
+                v = (crypto.randomUUID ? crypto.randomUUID()
+                    : Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+                localStorage.setItem('plp_votante', v);
+            }
+            return v;
+        } catch { return 'anonimo-sin-almacenamiento'; }
+    },
+    _votos() {
+        try { return JSON.parse(localStorage.getItem('plp_votos')) || {}; } catch { return {}; }
+    },
+    yaVoto(idAlerta) { return this._votos()[idAlerta] || null; },
+    registrar(idAlerta, voto) {
+        try {
+            const v = this._votos();
+            v[idAlerta] = voto;
+            localStorage.setItem('plp_votos', JSON.stringify(v));
+        } catch { /* sin almacenamiento: el servidor igual impide repetir */ }
+    }
+};
+
+const Api = {
     async _pedir(ruta, opciones = {}) {
         const headers = { 'Content-Type': 'application/json' };
         const token = Sesion.token();
@@ -27,13 +53,13 @@ const Sesion = {
         const datos = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-        if (res.status === 401 && token && ruta !== '/auth/login') {
-            Sesion.salir();
-            if (location.pathname.includes('/admin/')) location.replace('login.html');
-            throw new Error('Tu sesión venció. Inicia sesión de nuevo.');
-        }
-        const detalle = Array.isArray(datos.detalles) ? ' ' + datos.detalles.join(', ') : '';
-        throw new Error((datos.error || 'Error de conexión') + detalle);
+            if (res.status === 401 && token && ruta !== '/auth/login') {
+                Sesion.salir();
+                if (location.pathname.includes('/admin/')) location.replace('login.html');
+                throw new Error('Tu sesión venció. Inicia sesión de nuevo.');
+            }
+            const detalle = Array.isArray(datos.detalles) ? ' ' + datos.detalles.join(', ') : '';
+            throw new Error((datos.error || 'Error de conexión') + detalle);
         }
         return datos;
     },
@@ -50,6 +76,11 @@ const Sesion = {
     actualizar(id, datos, quitar = []) {
         return this._pedir(`/alertas/${id}`, { method: 'PUT', body: JSON.stringify({ ...datos, _quitar: quitar }) });
     },
-    confirmar(id) { return this._pedir(`/alertas/${id}/confirmar`, { method: 'PATCH' }); },
+    votar(id, voto) {
+        return this._pedir(`/alertas/${id}/votar`, {
+            method: 'POST',
+            body: JSON.stringify({ voto, votante: Votante.id() })
+        });
+    },
     eliminar(id)  { return this._pedir(`/alertas/${id}`, { method: 'DELETE' }); }
 };

@@ -4,11 +4,11 @@ const exigirAdmin = require('../middlewares/auth.middleware');
 
 const router = Router();
 
-//Publicas
+// Publicas
 router.get('/', controller.listar);
 router.get('/:id', controller.obtener);
 router.post('/', controller.crear);
-router.patch('/:id/confirmar', controller.confirmar);
+router.post('/:id/votar', controller.votar);
 
 // Solo administrador
 router.put('/:id', exigirAdmin, controller.actualizar);

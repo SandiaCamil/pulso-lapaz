@@ -1,6 +1,13 @@
+const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
 const database = require('../config/Database');
 const AlertaFactory = require('../models/AlertaFactory');
+
+// Las huellas de los votantes nunca salen hacia el navegador
+const SIN_VOTANTES = { projection: { votantes: 0 } };
+const CAMPOS_PROTEGIDOS = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona',
+                           'confirmaciones', 'desmentidos', 'votantes', 'estado', 'creado'];
+const UMBRAL_DESCARTE = 3;
 
 function errorHttp(status, mensaje, detalles) {
     const err = new Error(mensaje);
@@ -14,16 +21,17 @@ function aObjectId(id) {
     return new ObjectId(id);
 }
 
-const CAMPOS_PROTEGIDOS = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona', 'confirmaciones', 'estado', 'creado'];
-
 class AlertaService {
     get coleccion() {
         return database.coleccion('alertas');
     }
 
-  //CREATE
+    // CREATE
     async crear(datos) {
-        const alerta = AlertaFactory.crear(datos);
+        // Campos que solo el sistema puede asignar
+        const { _id, votantes, confirmaciones, desmentidos, estado, creado, ...limpio } = datos || {};
+
+        const alerta = AlertaFactory.crear(limpio);
         const errores = alerta.validar();
         if (errores.length) throw errorHttp(400, 'Datos inválidos', errores);
 
@@ -33,49 +41,46 @@ class AlertaService {
         return { _id: res.insertedId, ...doc };
     }
 
-  //READ (lista con filtros)
+    // READ (lista con filtros)
     async listar({ tipo, gravedad, zona, estado } = {}) {
         const filtro = {};
         if (tipo) filtro.tipo = tipo;
         if (gravedad) filtro.gravedad = gravedad;
         if (zona) filtro.zona = zona;
         if (estado) filtro.estado = estado;
-        return this.coleccion.find(filtro).sort({ creado: -1 }).limit(500).toArray();
+        return this.coleccion.find(filtro, SIN_VOTANTES).sort({ creado: -1 }).limit(500).toArray();
     }
 
-  //READ (alertas cercanas con el índice 2dsphere)
+    // READ (alertas cercanas con el índice 2dsphere)
     async cercanas(lng, lat, metros = 1000) {
         const x = Number(lng), y = Number(lat), r = Number(metros);
         if ([x, y, r].some(Number.isNaN)) throw errorHttp(400, 'lat, lng y radio deben ser números');
         return this.coleccion.find({
-        estado: 'activo',
-        ubicacion: {
-            $near: {
-            $geometry: { type: 'Point', coordinates: [x, y] },
-            $maxDistance: r
+            estado: 'activo',
+            ubicacion: {
+                $near: { $geometry: { type: 'Point', coordinates: [x, y] }, $maxDistance: r }
             }
-        }
-        }).limit(100).toArray();
+        }, SIN_VOTANTES).limit(100).toArray();
     }
 
-  //READ (una)
+    // READ (una)
     async obtener(id) {
-        const alerta = await this.coleccion.findOne({ _id: aObjectId(id) });
+        const alerta = await this.coleccion.findOne({ _id: aObjectId(id) }, SIN_VOTANTES);
         if (!alerta) throw errorHttp(404, 'Alerta no encontrada');
         return alerta;
     }
 
-    // UPDATE (edita campos, agrega nuevos y quita los indicados en _quitar)
+    // UPDATE (administrador: edita, agrega y quita campos)
     async actualizar(id, cambios) {
         const _id = aObjectId(id);
         const existente = await this.obtener(id);
 
-        const { _id: _i, creado: _c, tipo: _t, _quitar, ...permitidos } = cambios || {};
+        const { _id: _i, creado: _c, tipo: _t, votantes: _v, _quitar, ...permitidos } = cambios || {};
         const quitar = (Array.isArray(_quitar) ? _quitar : [])
-        .filter(k => typeof k === 'string' && !CAMPOS_PROTEGIDOS.includes(k));
+            .filter(k => typeof k === 'string' && !CAMPOS_PROTEGIDOS.includes(k));
 
         if (!Object.keys(permitidos).length && !quitar.length) {
-        throw errorHttp(400, 'No hay cambios para guardar');
+            throw errorHttp(400, 'No hay cambios para guardar');
         }
 
         const base = { ...existente, ...permitidos };
@@ -95,18 +100,42 @@ class AlertaService {
         return { _id, ...doc };
     }
 
-  //UPDATE (confirmar: +1)
-    async confirmar(id) {
+    // VOTAR: una vez por dispositivo (confirmar o negar)
+    async votar(id, voto, votanteId) {
+        if (!['confirmar', 'negar'].includes(voto)) throw errorHttp(400, 'Voto inválido');
+        if (typeof votanteId !== 'string' || votanteId.length < 16 || votanteId.length > 100) {
+            throw errorHttp(400, 'Identificador de votante inválido');
+        }
+
+        const _id = aObjectId(id);
+        const huella = crypto.createHash('sha256')
+            .update(votanteId + (process.env.JWT_SECRET || ''))
+            .digest('hex');
+        const campo = voto === 'confirmar' ? 'confirmaciones' : 'desmentidos';
+
+        // Una sola operación atómica: solo cuenta si esa huella aún no votó
         const res = await this.coleccion.findOneAndUpdate(
-        { _id: aObjectId(id) },
-        { $inc: { confirmaciones: 1 } },
-        { returnDocument: 'after' }
+            { _id, estado: 'activo', votantes: { $ne: huella } },
+            { $push: { votantes: huella }, $inc: { [campo]: 1 } },
+            { returnDocument: 'after', projection: { votantes: 0 } }
         );
-        if (!res) throw errorHttp(404, 'Alerta no encontrada');
+
+        if (!res) {
+            const existe = await this.coleccion.findOne({ _id }, { projection: { estado: 1, votantes: 1 } });
+            if (!existe) throw errorHttp(404, 'Alerta no encontrada');
+            if ((existe.votantes || []).includes(huella)) throw errorHttp(409, 'Ya votaste en esta alerta');
+            throw errorHttp(409, 'Esta alerta ya no está activa');
+        }
+
+        // Si la comunidad la niega, se descarta sola
+        if ((res.desmentidos || 0) >= UMBRAL_DESCARTE && res.desmentidos > (res.confirmaciones || 0)) {
+            await this.coleccion.updateOne({ _id, estado: 'activo' }, { $set: { estado: 'descartado' } });
+            res.estado = 'descartado';
+        }
         return res;
     }
 
-  //DELETE
+    // DELETE
     async eliminar(id) {
         const res = await this.coleccion.deleteOne({ _id: aObjectId(id) });
         if (!res.deletedCount) throw errorHttp(404, 'Alerta no encontrada');
