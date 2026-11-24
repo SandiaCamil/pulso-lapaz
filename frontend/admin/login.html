@@ -3,41 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin · Iniciar sesión</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛠️%3C/text%3E%3C/svg%3E">
+    <title>Acceso Administrativo · Pulso de La Paz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-body">
     <main class="login">
         <form id="form-login" class="tarjeta">
-            <h1>Panel de administración</h1>
-            <p class="meta">Pulso de La Paz</p>
+            <div class="login-cabecera">
+                <span class="marca-icono"><i data-lucide="shield"></i></span>
+                <div>
+                    <h1>Panel de Administración</h1>
+                    <p class="meta">Pulso de La Paz · Acceso restringido</p>
+                </div>
+            </div>
             <label>Usuario<input id="usuario" autocomplete="username" required></label>
             <label>Contraseña
                 <div class="campo-clave">
                     <input id="password" type="password" autocomplete="current-password" required>
-                    <button type="button" id="ver-clave" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁️</button>
+                    <button type="button" id="ver-clave" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                        <i data-lucide="eye"></i>
+                    </button>
                 </div>
             </label>
-            <button class="btn" type="submit" id="btn-login">Ingresar</button>
-            <a href="../index.html" class="enlace-volver">← Volver al mapa</a>
+            <button class="btn" type="submit" id="btn-login">Iniciar sesión</button>
+            <a href="../index.html" class="enlace-volver"><i data-lucide="arrow-left"></i><span>Volver al mapa público</span></a>
         </form>
     </main>
     <div id="toast"></div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
     <script>
         if (Sesion.activa()) location.replace('alertas.html');
+        renderIconos();
 
         document.getElementById('ver-clave').addEventListener('click', () => {
             const campo = document.getElementById('password');
             const boton = document.getElementById('ver-clave');
             const mostrar = campo.type === 'password';
             campo.type = mostrar ? 'text' : 'password';
-            boton.textContent = mostrar ? '🙈' : '👁️';
+            boton.innerHTML = `<i data-lucide="${mostrar ? 'eye-off' : 'eye'}"></i>`;
             boton.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+            renderIconos();
         });
 
         document.getElementById('form-login').addEventListener('submit', async e => {

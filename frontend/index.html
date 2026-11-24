@@ -3,47 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pulso de La Paz</title>
+    <title>Pulso de La Paz · Monitoreo Urbano</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🗺️%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E">
 </head>
 <body>
     <header class="barra">
-        <h1>🗺️ Pulso de La Paz</h1>
+        <div class="marca">
+            <span class="marca-icono"><i data-lucide="activity"></i></span>
+            <div class="marca-texto">
+                <h1>Pulso de La Paz</h1>
+                <span class="subtitulo">Monitoreo vial y urbano</span>
+            </div>
+        </div>
         <div class="filtros">
-            <select id="filtro-tipo"><option value="">Todos los tipos</option></select>
-            <select id="filtro-grav">
+            <select id="filtro-tipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option></select>
+            <select id="filtro-grav" aria-label="Filtrar por gravedad">
                 <option value="">Toda gravedad</option>
                 <option value="baja">Baja</option>
                 <option value="media">Media</option>
                 <option value="alta">Alta</option>
             </select>
-            <a id="enlace-admin" class="enlace-admin" href="admin/login.html" title="Administración">🔐<span class="txt"> Admin</span></a>
-            <span id="contador"></span>
+            <a id="enlace-admin" class="enlace-admin" href="admin/login.html" title="Administración">
+                <i data-lucide="shield"></i><span class="txt">Admin</span>
+            </a>
+            <span id="contador" class="badge-contador"></span>
         </div>
     </header>
 
     <div id="mapa"></div>
 
     <div class="acciones">
-        <button id="btn-cercanas" class="btn sec">📍 Cerca de mí</button>
-        <button id="btn-nuevo" class="btn">➕ Reportar</button>
+        <button id="btn-cercanas" class="btn sec"><i data-lucide="navigation"></i><span>Cerca de mí</span></button>
+        <button id="btn-nuevo" class="btn"><i data-lucide="plus"></i><span>Reportar alerta</span></button>
     </div>
 
     <div id="aviso-mapa"></div>
     
     <aside id="panel">
-        <button id="panel-cerrar" aria-label="Cerrar">✕</button>
+        <button id="panel-cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button>
         <div id="panel-contenido"></div>
     </aside>
 
     <div id="toast"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/mapa.js"></script>

@@ -3,18 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin · Alertas</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛠️%3C/text%3E%3C/svg%3E">
+    <title>Administración · Pulso de La Paz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-body">
     <header class="barra">
-        <h1>Panel admin</h1>
+        <div class="marca">
+            <span class="marca-icono"><i data-lucide="shield-check"></i></span>
+            <div class="marca-texto">
+                <h1>Panel de Administración</h1>
+                <span class="subtitulo">Pulso de La Paz</span>
+            </div>
+        </div>
         <nav class="nav">
-            <a href="alertas.html" class="activo">📋 Alertas</a>
-            <a href="../index.html">🗺️ Mapa</a>
-            <button id="btn-salir" class="enlace">Salir</button>
+            <a href="alertas.html" class="activo"><i data-lucide="list-checks"></i><span>Alertas</span></a>
+            <a href="../index.html"><i data-lucide="map"></i><span>Mapa público</span></a>
+            <button id="btn-salir" class="enlace"><i data-lucide="log-out"></i><span>Salir</span></button>
         </nav>
     </header>
 
@@ -30,7 +39,7 @@
                 <option value="resuelto">Resueltas</option>
                 <option value="descartado">Descartadas</option>
             </select>
-            <button id="btn-recargar" class="btn sec">↻ Actualizar</button>
+            <button id="btn-recargar" class="btn sec"><i data-lucide="refresh-cw"></i><span>Actualizar</span></button>
         </div>
 
         <div class="tabla-wrap">
@@ -38,7 +47,7 @@
                 <thead>
                     <tr>
                         <th>Tipo</th><th>Descripción</th><th>Gravedad</th><th>Zona</th>
-                        <th>Estado</th><th>Votos</th><th>Creada</th><th></th>
+                        <th>Estado</th><th>Validación</th><th>Creada</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="filas"></tbody>
@@ -49,6 +58,7 @@
     <div id="modal" class="modal"><div class="modal-caja" id="modal-caja"></div></div>
     <div id="toast"></div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
     <script src="js/auth.js"></script>

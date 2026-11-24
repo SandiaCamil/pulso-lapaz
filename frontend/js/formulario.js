@@ -17,18 +17,19 @@ const Formulario = {
 
         const aviso = document.getElementById('aviso-mapa');
         aviso.innerHTML = `
-        <p id="aviso-texto">👆 Toca el mapa para marcar el lugar</p>
-        <div class="aviso-botones">
-            <button type="button" id="a-gps" class="btn sec">📍 Mi ubicación</button>
-            <button type="button" id="a-cancel" class="btn sec">Cancelar</button>
-            <button type="button" id="a-ok" class="btn" disabled>Continuar</button>
-        </div>`;
+            <p id="aviso-texto">Toca el mapa para marcar la ubicación del incidente</p>
+            <div class="aviso-botones">
+                <button type="button" id="a-gps" class="btn sec">${iconoHtml('locate-fixed')}<span>Mi ubicación</span></button>
+                <button type="button" id="a-cancel" class="btn sec">Cancelar</button>
+                <button type="button" id="a-ok" class="btn" disabled>Continuar</button>
+            </div>`;
         aviso.classList.add('visible');
+        renderIconos();
 
         const ok = document.getElementById('a-ok');
         if (this.punto) {
-        ok.disabled = false;
-        document.getElementById('aviso-texto').textContent = '✅ Ubicación marcada. Toca otro punto para moverla.';
+            ok.disabled = false;
+            document.getElementById('aviso-texto').textContent = 'Ubicación marcada. Toca otro punto para ajustarla.';
         }
 
         document.getElementById('a-gps').onclick = () => this.usarGps();
@@ -44,33 +45,33 @@ const Formulario = {
 
     mostrarFormulario() {
         const opciones = Object.entries(TIPOS)
-        .map(([k, t]) => `<option value="${k}">${t.icono} ${t.etiqueta}</option>`).join('');
+            .map(([k, t]) => `<option value="${k}">${t.etiqueta}</option>`).join('');
 
         const ubicacion = esMovil()
-        ? `<span id="f-coords"></span>
-            <button type="button" id="f-cambiar" class="btn sec">📍 Cambiar ubicación</button>`
-        : `<button type="button" id="f-gps" class="btn sec">📍 Usar mi ubicación</button>
-            <span id="f-coords">O toca el mapa para marcar el lugar</span>`;
+            ? `<span id="f-coords"></span>
+               <button type="button" id="f-cambiar" class="btn sec">${iconoHtml('map-pin')}<span>Cambiar ubicación</span></button>`
+            : `<button type="button" id="f-gps" class="btn sec">${iconoHtml('locate-fixed')}<span>Usar mi ubicación actual</span></button>
+               <span id="f-coords">O haz clic directamente sobre el mapa para marcar el punto</span>`;
 
         Panel.abrir(`
-        <h2>Nuevo reporte</h2>
-        <form id="form-alerta">
-            <label>Tipo<select id="f-tipo">${opciones}</select></label>
-            <label>Descripción
-            <textarea id="f-desc" rows="3" maxlength="300" required placeholder="¿Qué está pasando?"></textarea>
-            </label>
-            <label>Gravedad
-            <select id="f-grav">
-                <option value="baja">Baja</option>
-                <option value="media" selected>Media</option>
-                <option value="alta">Alta</option>
-            </select>
-            </label>
-            <label>Zona<input id="f-zona" type="text" maxlength="60" placeholder="Ej. Sopocachi"></label>
-            <div id="f-extra"></div>
-            <div class="ubicacion">${ubicacion}</div>
-            <button type="submit" class="btn">Publicar alerta</button>
-        </form>
+            <h2>${iconoHtml('file-plus-2')}<span>Nuevo reporte</span></h2>
+            <form id="form-alerta">
+                <label>Tipo de incidente<select id="f-tipo">${opciones}</select></label>
+                <label>Descripción
+                    <textarea id="f-desc" rows="3" maxlength="300" required placeholder="Describe brevemente lo que ocurre en la vía..."></textarea>
+                </label>
+                <label>Nivel de gravedad
+                    <select id="f-grav">
+                        <option value="baja">Baja</option>
+                        <option value="media" selected>Media</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </label>
+                <label>Zona o referencia<input id="f-zona" type="text" maxlength="60" placeholder="Ej. Sopocachi, Av. 6 de Agosto"></label>
+                <div id="f-extra"></div>
+                <div class="ubicacion">${ubicacion}</div>
+                <button type="submit" class="btn">Publicar reporte</button>
+            </form>
         `);
 
         this.dibujarExtras();
@@ -84,98 +85,96 @@ const Formulario = {
 
         const cambiar = document.getElementById('f-cambiar');
         if (cambiar) cambiar.addEventListener('click', () => {
-        document.getElementById('panel').classList.remove('abierto'); // sin borrar el punto
-        this.elegirUbicacion();
+            document.getElementById('panel').classList.remove('abierto');
+            this.elegirUbicacion();
         });
 
         Mapa.onSeleccionPunto = ll => {
-        if (document.getElementById('form-alerta')) this.setPunto(ll.lat, ll.lng);
+            if (document.getElementById('form-alerta')) this.setPunto(ll.lat, ll.lng);
         };
     },
 
-    //Campos propios del tipo elegido (bloqueo, accidente, etc.)
     dibujarExtras() {
         const tipo = document.getElementById('f-tipo').value;
         const html = TIPOS[tipo].campos.map(c => {
-        const id = `x-${c.n}`;
-        if (c.t === 'boolean') {
-            return `<label>${c.l}<select id="${id}"><option value="">Sin dato</option><option value="true">Sí</option><option value="false">No</option></select></label>`;
-        }
-        return `<label>${c.l}<input id="${id}" type="${c.t === 'number' ? 'number' : 'text'}" ${c.t === 'number' ? 'min="0"' : ''}></label>`;
+            const id = `x-${c.n}`;
+            if (c.t === 'boolean') {
+                return `<label>${c.l}<select id="${id}"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select></label>`;
+            }
+            return `<label>${c.l}<input id="${id}" type="${c.t === 'number' ? 'number' : 'text'}" ${c.t === 'number' ? 'min="0"' : ''}></label>`;
         }).join('');
         document.getElementById('f-extra').innerHTML = html;
     },
 
     actualizarCoords() {
         const c = document.getElementById('f-coords');
-        if (c && this.punto) c.textContent = `Ubicación: ${this.punto.lat.toFixed(5)}, ${this.punto.lng.toFixed(5)}`;
+        if (c && this.punto) c.textContent = `Coordenadas: ${this.punto.lat.toFixed(5)}, ${this.punto.lng.toFixed(5)}`;
     },
 
     setPunto(lat, lng) {
         this.punto = { lat, lng };
 
         if (this.marcador) {
-        this.marcador.setLatLng([lat, lng]);
+            this.marcador.setLatLng([lat, lng]);
         } else {
-        this.marcador = L.marker([lat, lng], {
-            icon: L.divIcon({
-            className: 'punto-nuevo-wrap',
-            html: '<div class="punto-nuevo"></div>',
-            iconSize: [26, 26],
-            iconAnchor: [13, 13]
-            }),
-            interactive: false
-        }).addTo(Mapa.map);
+            this.marcador = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'punto-nuevo-wrap',
+                    html: '<div class="punto-nuevo"></div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                }),
+                interactive: false
+            }).addTo(Mapa.map);
         }
 
         this.actualizarCoords();
 
-        //Si estamos en el paso 1 del celular, habilita "Continuar"
         const ok = document.getElementById('a-ok');
         if (ok) {
-        ok.disabled = false;
-        document.getElementById('aviso-texto').textContent = '✅ Ubicación marcada. Toca otro punto para moverla.';
+            ok.disabled = false;
+            document.getElementById('aviso-texto').textContent = 'Ubicación marcada. Toca otro punto para ajustarla.';
         }
     },
 
     usarGps() {
-        if (!navigator.geolocation) return toast('Tu navegador no tiene GPS', true);
+        if (!navigator.geolocation) return toast('Tu navegador no soporta geolocalización', true);
         navigator.geolocation.getCurrentPosition(
-        pos => {
-            this.setPunto(pos.coords.latitude, pos.coords.longitude);
-            Mapa.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-        },
-        () => toast('No se pudo obtener tu ubicación. Toca el mapa.', true),
-        { enableHighAccuracy: true, timeout: 10000 }
+            pos => {
+                this.setPunto(pos.coords.latitude, pos.coords.longitude);
+                Mapa.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+            },
+            () => toast('No se pudo obtener tu ubicación. Marca el punto en el mapa.', true),
+            { enableHighAccuracy: true, timeout: 10000 }
         );
     },
 
     async enviar(e) {
         e.preventDefault();
-        if (!this.punto) return toast('Marca el lugar en el mapa o usa tu ubicación', true);
+        if (!this.punto) return toast('Selecciona la ubicación en el mapa o usa el GPS', true);
 
         const tipo = document.getElementById('f-tipo').value;
         const datos = {
-        tipo,
-        descripcion: document.getElementById('f-desc').value,
-        gravedad: document.getElementById('f-grav').value,
-        zona: document.getElementById('f-zona').value,
-        ubicacion: { lat: this.punto.lat, lng: this.punto.lng }
+            tipo,
+            descripcion: document.getElementById('f-desc').value,
+            gravedad: document.getElementById('f-grav').value,
+            zona: document.getElementById('f-zona').value,
+            ubicacion: { lat: this.punto.lat, lng: this.punto.lng }
         };
 
         TIPOS[tipo].campos.forEach(c => {
-        const v = document.getElementById(`x-${c.n}`).value.trim();
-        if (v === '') return;
-        datos[c.n] = c.t === 'number' ? Number(v) : c.t === 'boolean' ? v === 'true' : v;
+            const v = document.getElementById(`x-${c.n}`).value.trim();
+            if (v === '') return;
+            datos[c.n] = c.t === 'number' ? Number(v) : c.t === 'boolean' ? v === 'true' : v;
         });
 
         try {
-        await Api.crear(datos);
-        Panel.cerrar();
-        await Mapa.cargar();
-        toast('Alerta publicada ✅');
+            await Api.crear(datos);
+            Panel.cerrar();
+            await Mapa.cargar();
+            toast('Alerta publicada correctamente');
         } catch (err) {
-        toast(err.message, true);
+            toast(err.message, true);
         }
     },
 

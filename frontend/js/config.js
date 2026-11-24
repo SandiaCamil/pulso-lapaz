@@ -1,39 +1,38 @@
 const API_URL = ['5500', '5501'].includes(location.port) ? 'http://localhost:3000/api' : '/api';
 
-const MAP_STYLE = 'positron';
-const COLOR_GRAVEDAD = { baja: '#4ade80', media: '#facc15', alta: '#ff5a5f' };
+const COLOR_GRAVEDAD = { baja: '#22c55e', media: '#eab308', alta: '#ef4444' };
 
 const TIPOS = {
     bloqueo: {
-        icono: '🚧', etiqueta: 'Bloqueo',
+        icono: 'octagon-alert', etiqueta: 'Bloqueo',
         campos: [
             { n: 'ruta_alterna', l: 'Ruta alterna', t: 'text' },
             { n: 'duracion_estimada', l: 'Duración estimada', t: 'text' }
         ]
     },
     marcha: {
-        icono: '📢', etiqueta: 'Marcha',
+        icono: 'megaphone', etiqueta: 'Marcha',
         campos: [
             { n: 'organizador', l: 'Organizador', t: 'text' },
             { n: 'recorrido', l: 'Recorrido', t: 'text' }
         ]
     },
     deslizamiento: {
-        icono: '⛰️', etiqueta: 'Deslizamiento',
+        icono: 'mountain', etiqueta: 'Deslizamiento',
         campos: [
             { n: 'zona_de_riesgo', l: 'Zona de riesgo', t: 'text' },
             { n: 'calle_habilitada', l: '¿Calle habilitada?', t: 'boolean' }
         ]
     },
     accidente: {
-        icono: '🚗', etiqueta: 'Accidente',
+        icono: 'car-front', etiqueta: 'Accidente',
         campos: [
             { n: 'heridos', l: 'Heridos', t: 'number' },
             { n: 'ambulancia_en_camino', l: '¿Ambulancia en camino?', t: 'boolean' }
         ]
     },
     calle_cerrada: {
-        icono: '🕳️', etiqueta: 'Calle cerrada',
+        icono: 'construction', etiqueta: 'Calle cerrada',
         campos: [
             { n: 'motivo', l: 'Motivo', t: 'text' },
             { n: 'fecha_reapertura', l: 'Reapertura estimada', t: 'text' }
@@ -41,8 +40,15 @@ const TIPOS = {
     }
 };
 
-// Campos que ya tienen su lugar en la pantalla; el resto se muestra automáticamente
 const CAMPOS_BASE = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona', 'confirmaciones', 'desmentidos', 'votantes', 'estado', 'creado'];
+
+function renderIconos() {
+    if (window.lucide) lucide.createIcons();
+}
+
+function iconoHtml(nombre, clase = '') {
+    return `<i data-lucide="${esc(nombre)}" class="ico ${clase}"></i>`;
+}
 
 function esc(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, c => (
@@ -76,6 +82,7 @@ const Panel = {
     abrir(html) {
         document.getElementById('panel-contenido').innerHTML = html;
         document.getElementById('panel').classList.add('abierto');
+        renderIconos();
     },
     cerrar() {
         document.getElementById('panel').classList.remove('abierto');

@@ -9,13 +9,13 @@ const Editor = {
         this.alGuardar = alGuardar;
 
         const [lng, lat] = alerta.ubicacion.coordinates;
-        const t = TIPOS[alerta.tipo] || { icono: '📍', etiqueta: alerta.tipo };
+        const t = TIPOS[alerta.tipo] || { icono: 'map-pin', etiqueta: alerta.tipo };
         const opciones = (lista, actual) =>
             lista.map(v => `<option value="${v}" ${v === actual ? 'selected' : ''}>${v}</option>`).join('');
         const extras = Object.entries(alerta).filter(([k]) => !CAMPOS_BASE.includes(k));
 
         document.getElementById('modal-caja').innerHTML = `
-            <h2>${t.icono} Editar alerta · ${esc(t.etiqueta)}</h2>
+            <h2>${iconoHtml(t.icono)}<span>Editar alerta · ${esc(t.etiqueta)}</span></h2>
             <p class="meta">ID: ${esc(alerta._id)} · Creada: ${new Date(alerta.creado).toLocaleString('es-BO')}</p>
             <form id="form-editor">
                 <label>Descripción
@@ -30,14 +30,14 @@ const Editor = {
                     <label>Longitud<input id="e-lng" type="number" step="any" value="${lng}" required></label>
                 </div>
 
-                <h3>Campos adicionales</h3>
-                <p class="meta">Se generan desde el documento. Cualquier campo creado en Atlas aparece aquí.</p>
+                <h3>Campos adicionales (Esquema flexible NoSQL)</h3>
+                <p class="meta">Atributos específicos o agregados directamente desde MongoDB Atlas.</p>
                 <div id="e-extras">${extras.map(([k, v]) => this.filaExtra(k, v)).join('')}</div>
 
                 <div class="nuevo-campo">
-                    <label>Nuevo campo<input id="n-nombre" placeholder="ej. garantia"></label>
-                    <label>Valor<input id="n-valor" placeholder="ej. 6 meses"></label>
-                    <button type="button" id="n-agregar" class="btn sec mini">＋ Agregar</button>
+                    <label>Nuevo campo<input id="n-nombre" placeholder="ej. sector_afectado"></label>
+                    <label>Valor<input id="n-valor" placeholder="ej. Carril de bajada"></label>
+                    <button type="button" id="n-agregar" class="btn sec mini">${iconoHtml('plus')}<span>Agregar</span></button>
                 </div>
 
                 <div class="modal-botones">
@@ -47,6 +47,8 @@ const Editor = {
             </form>`;
 
         document.getElementById('modal').classList.add('abierto');
+        renderIconos();
+
         document.getElementById('form-editor').addEventListener('submit', e => this.guardar(e));
         document.getElementById('e-cancelar').onclick = () => this.cerrar();
         document.getElementById('n-agregar').onclick = () => this.agregar();
@@ -76,7 +78,7 @@ const Editor = {
         }
         return `<div class="campo-extra" data-clave="${esc(clave)}" data-tipo="${tipo}">
             <label>${esc(clave.replace(/_/g, ' '))}${control}</label>
-            <button type="button" class="btn sec mini quitar" title="Quitar este campo">🗑</button>
+            <button type="button" class="btn sec mini quitar" title="Quitar campo">${iconoHtml('trash-2')}</button>
         </div>`;
     },
 
@@ -97,6 +99,7 @@ const Editor = {
 
         this.quitar.delete(nombre);
         document.getElementById('e-extras').insertAdjacentHTML('beforeend', this.filaExtra(nombre, valor));
+        renderIconos();
         document.getElementById('n-nombre').value = '';
         document.getElementById('n-valor').value = '';
     },
@@ -132,7 +135,7 @@ const Editor = {
         try {
             await Api.actualizar(this.alerta._id, datos, [...this.quitar]);
             this.cerrar();
-            toast('Cambios guardados ✅');
+            toast('Cambios guardados correctamente');
             if (this.alGuardar) this.alGuardar();
         } catch (err) {
             toast(err.message, true);

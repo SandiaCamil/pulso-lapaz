@@ -24,8 +24,8 @@ const Tabla = {
     render() {
         const d = this.datos;
         document.getElementById('resumen').innerHTML = `
-            <div class="dato"><b>${d.length}</b><span>Alertas en total</span></div>
-            <div class="dato"><b>${d.filter(a => a.estado === 'activo').length}</b><span>Activas</span></div>
+            <div class="dato"><b>${d.length}</b><span>Total registradas</span></div>
+            <div class="dato"><b>${d.filter(a => a.estado === 'activo').length}</b><span>Activas en mapa</span></div>
             <div class="dato"><b>${d.filter(a => a.estado === 'resuelto').length}</b><span>Resueltas</span></div>
             <div class="dato"><b>${d.filter(a => a.gravedad === 'alta' && a.estado === 'activo').length}</b><span>Gravedad alta activas</span></div>`;
 
@@ -33,26 +33,32 @@ const Tabla = {
         const filas = document.getElementById('filas');
 
         if (!lista.length) {
-            filas.innerHTML = '<tr><td colspan="8" class="vacio">No hay alertas con esos filtros</td></tr>';
+            filas.innerHTML = '<tr><td colspan="8" class="vacio">No se encontraron alertas con los filtros seleccionados</td></tr>';
             return;
         }
 
         filas.innerHTML = lista.map(a => {
-            const t = TIPOS[a.tipo] || { icono: '📍', etiqueta: a.tipo };
+            const t = TIPOS[a.tipo] || { icono: 'map-pin', etiqueta: a.tipo };
+            const color = COLOR_GRAVEDAD[a.gravedad] || '#94a3b8';
             return `<tr data-id="${esc(a._id)}">
-                <td>${t.icono} ${esc(t.etiqueta)}</td>
+                <td><span class="celda-ico">${iconoHtml(t.icono)}<span>${esc(t.etiqueta)}</span></span></td>
                 <td class="desc">${esc(a.descripcion)}</td>
-                <td><span class="etiqueta" style="background:${COLOR_GRAVEDAD[a.gravedad] || '#fff'}">${esc(a.gravedad)}</span></td>
+                <td><span class="etiqueta-grav"><span class="punto-color" style="background:${color}"></span>${esc(a.gravedad)}</span></td>
                 <td>${esc(a.zona || '-')}</td>
                 <td class="estado-${esc(a.estado)}">${esc(a.estado)}</td>
-                <td>✅ ${a.confirmaciones || 0} · ❌ ${a.desmentidos || 0}</td>
+                <td class="celda-votos">
+                    <span class="v-pos">${iconoHtml('thumbs-up')} ${a.confirmaciones || 0}</span>
+                    <span class="v-neg">${iconoHtml('thumbs-down')} ${a.desmentidos || 0}</span>
+                </td>
                 <td>${new Date(a.creado).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}</td>
                 <td class="acciones-fila">
-                    <button class="btn sec mini" data-accion="editar">✏️ Editar</button>
-                    <button class="btn peligro mini" data-accion="eliminar">🗑️</button>
+                    <button class="btn sec mini" data-accion="editar">${iconoHtml('pencil')}<span>Editar</span></button>
+                    <button class="btn peligro mini" data-accion="eliminar" title="Eliminar">${iconoHtml('trash-2')}</button>
                 </td>
             </tr>`;
         }).join('');
+
+        renderIconos();
     }
 };
 
@@ -61,8 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const selTipo = document.getElementById('f-tipo');
     Object.entries(TIPOS).forEach(([k, t]) => {
-        selTipo.insertAdjacentHTML('beforeend', `<option value="${k}">${t.icono} ${t.etiqueta}</option>`);
+        selTipo.insertAdjacentHTML('beforeend', `<option value="${k}">${t.etiqueta}</option>`);
     });
+
+    renderIconos();
 
     document.getElementById('q').addEventListener('input', () => Tabla.render());
     selTipo.addEventListener('change', () => Tabla.render());
