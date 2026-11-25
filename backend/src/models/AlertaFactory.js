@@ -1,3 +1,4 @@
+const Alerta = require('./Alerta');
 const Bloqueo = require('./Bloqueo');
 const Marcha = require('./Marcha');
 const Deslizamiento = require('./Deslizamiento');
@@ -13,14 +14,27 @@ const CLASES = {
 };
 
 class AlertaFactory {
-    static crear(datos) {
-        const Clase = CLASES[datos?.tipo];
-        if (!Clase) {
-        const err = new Error(`Tipo de alerta no válido. Use: ${AlertaFactory.tiposValidos().join(', ')}`);
+    static normalizar(texto) {
+        return String(texto ?? '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 30);
+    }
+
+    static crear(datos, estricto = true) {
+        const bruto = typeof datos?.tipo === 'string' ? datos.tipo : '';
+        const tipo = estricto ? AlertaFactory.normalizar(bruto) : bruto;
+
+        const Clase = CLASES[tipo];
+        if (Clase) return new Clase(datos);
+
+        if (tipo.length >= 3) return new Alerta({ ...datos, tipo }); // incidente libre
+
+        const err = new Error('Escribe el nombre del incidente (mínimo 3 letras)');
         err.status = 400;
         throw err;
-        }
-        return new Clase(datos);
     }
 
     static tiposValidos() {

@@ -9,7 +9,7 @@ const Editor = {
         this.alGuardar = alGuardar;
 
         const [lng, lat] = alerta.ubicacion.coordinates;
-        const t = TIPOS[alerta.tipo] || { icono: 'map-pin', etiqueta: alerta.tipo };
+        const t = infoTipo(alerta.tipo);
         const opciones = (lista, actual) =>
             lista.map(v => `<option value="${v}" ${v === actual ? 'selected' : ''}>${v}</option>`).join('');
         const extras = Object.entries(alerta).filter(([k]) => !CAMPOS_BASE.includes(k));

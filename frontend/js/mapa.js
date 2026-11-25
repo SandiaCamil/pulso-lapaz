@@ -7,7 +7,6 @@ const Mapa = {
         this.map = L.map('mapa', { zoomControl: false }).setView([-16.4955, -68.1335], 14);
         L.control.zoom({ position: 'topleft' }).addTo(this.map);
 
-        // Capa cartográfica detallada (calles, avenidas, plazas, hospitales y referencias)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
@@ -23,7 +22,7 @@ const Mapa = {
             const [lng, lat] = a.ubicacion.coordinates;
             const color = COLOR_GRAVEDAD[a.gravedad] || '#6366f1';
             const radio = 9 + Math.min(a.confirmaciones || 0, 10);
-            const t = TIPOS[a.tipo] || { etiqueta: a.tipo };
+            const t = infoTipo(a.tipo);
 
             const marcador = L.circleMarker([lat, lng], {
                 radius: radio, color: '#0f172a', weight: 2.5,
@@ -39,13 +38,15 @@ const Mapa = {
         const filtros = { estado: 'activo' };
         const tipo = document.getElementById('filtro-tipo').value;
         const grav = document.getElementById('filtro-grav').value;
-        if (tipo) filtros.tipo = tipo;
+        if (tipo && tipo !== '__otros') filtros.tipo = tipo;
         if (grav) filtros.gravedad = grav;
 
         try {
-            const alertas = await Api.listar(filtros);
+            let alertas = await Api.listar(filtros);
+            if (tipo === '__otros') alertas = alertas.filter(a => !TIPOS[a.tipo]);
             this.dibujar(alertas);
-            document.getElementById('contador').textContent = `${alertas.length} activas`;
+            const n = alertas.length;
+            document.getElementById('contador').textContent = `${n} ${n === 1 ? 'activa' : 'activas'}`;
         } catch (err) {
             toast(err.message, true);
         }
@@ -63,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.entries(TIPOS).forEach(([clave, t]) => {
         selTipo.insertAdjacentHTML('beforeend', `<option value="${clave}">${t.etiqueta}</option>`);
     });
+    selTipo.insertAdjacentHTML('beforeend', '<option value="__otros">Otros incidentes</option>');
 
     Mapa.iniciar();
     Mapa.cargar();

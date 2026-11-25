@@ -89,3 +89,18 @@ const Panel = {
         Formulario.limpiarMarcador();
     }
 };
+
+function slug(texto) {
+    return String(texto || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30);
+}
+
+function nombreLegible(clave) {
+    const t = String(clave || '').replace(/_/g, ' ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+function infoTipo(tipo) {
+    return TIPOS[tipo] || { icono: 'map-pin', etiqueta: nombreLegible(tipo), campos: [] };
+}

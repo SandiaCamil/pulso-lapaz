@@ -38,7 +38,7 @@ const Tabla = {
         }
 
         filas.innerHTML = lista.map(a => {
-            const t = TIPOS[a.tipo] || { icono: 'map-pin', etiqueta: a.tipo };
+            const t = infoTipo(a.tipo);
             const color = COLOR_GRAVEDAD[a.gravedad] || '#94a3b8';
             return `<tr data-id="${esc(a._id)}">
                 <td><span class="celda-ico">${iconoHtml(t.icono)}<span>${esc(t.etiqueta)}</span></span></td>

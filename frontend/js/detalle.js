@@ -8,7 +8,7 @@ const Detalle = {
     },
 
     render(a) {
-        const t = TIPOS[a.tipo] || { icono: 'map-pin', etiqueta: a.tipo };
+        const t = infoTipo(a.tipo);
         const color = COLOR_GRAVEDAD[a.gravedad] || '#94a3b8';
         const admin = Sesion.activa();
 

@@ -5,15 +5,33 @@ const AlertaFactory = require('../models/AlertaFactory');
 
 // Las huellas de los votantes nunca salen hacia el navegador
 const SIN_VOTANTES = { projection: { votantes: 0 } };
-const CAMPOS_PROTEGIDOS = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona',
-                           'confirmaciones', 'desmentidos', 'votantes', 'estado', 'creado'];
+const CAMPOS_PROTEGIDOS = ['_id', 'tipo', 'descripcion', 'ubicacion', 'gravedad', 'zona', 'confirmaciones', 'desmentidos', 'votantes', 'estado', 'creado'];
 const UMBRAL_DESCARTE = 3;
+const MAX_EXTRAS = 10;
 
 function errorHttp(status, mensaje, detalles) {
     const err = new Error(mensaje);
     err.status = status;
     if (detalles) err.detalles = detalles;
     return err;
+}
+
+// Limpia los campos adicionales que envía el público
+function sanitizarExtras(extras) {
+    const limpio = {};
+    for (const [k, v] of Object.entries(extras)) {
+        const clave = AlertaFactory.normalizar(k);
+        if (!/^[a-z]/.test(clave)) throw errorHttp(400, `Título de campo inválido: "${String(k).slice(0, 30)}"`);
+        if (CAMPOS_PROTEGIDOS.includes(clave)) throw errorHttp(400, `El título "${clave}" está reservado`);
+        if (!['string', 'number', 'boolean'].includes(typeof v)) continue;
+        const valor = typeof v === 'string' ? v.trim().slice(0, 200) : v;
+        if (valor === '') continue;
+        limpio[clave] = valor;
+    }
+    if (Object.keys(limpio).length > MAX_EXTRAS) {
+        throw errorHttp(400, `Máximo ${MAX_EXTRAS} campos adicionales`);
+    }
+    return limpio;
 }
 
 function aObjectId(id) {
@@ -29,9 +47,13 @@ class AlertaService {
     // CREATE
     async crear(datos) {
         // Campos que solo el sistema puede asignar
-        const { _id, votantes, confirmaciones, desmentidos, estado, creado, ...limpio } = datos || {};
+        const { _id, votantes, confirmaciones, desmentidos, estado, creado, ...resto } = datos || {};
+        // Lo que el público puede enviar: campos base + extras saneados
+        const { tipo, descripcion, ubicacion, gravedad, zona, ...extras } = resto;
 
-        const alerta = AlertaFactory.crear(limpio);
+        const alerta = AlertaFactory.crear({
+            tipo, descripcion, ubicacion, gravedad, zona, ...sanitizarExtras(extras)
+        });
         const errores = alerta.validar();
         if (errores.length) throw errorHttp(400, 'Datos inválidos', errores);
 
@@ -58,7 +80,7 @@ class AlertaService {
         return this.coleccion.find({
             estado: 'activo',
             ubicacion: {
-                $near: { $geometry: { type: 'Point', coordinates: [x, y] }, $maxDistance: r }
+                $near: { $geometry: { type: 'Point', coordinates: [x, y] },$maxDistance: r }
             }
         }, SIN_VOTANTES).limit(100).toArray();
     }
@@ -86,7 +108,7 @@ class AlertaService {
         const base = { ...existente, ...permitidos };
         quitar.forEach(k => delete base[k]);
 
-        const alerta = AlertaFactory.crear(base);
+        const alerta = AlertaFactory.crear(base, false);
         const errores = alerta.validar();
         if (errores.length) throw errorHttp(400, 'Datos inválidos', errores);
 
@@ -116,7 +138,7 @@ class AlertaService {
         // Una sola operación atómica: solo cuenta si esa huella aún no votó
         const res = await this.coleccion.findOneAndUpdate(
             { _id, estado: 'activo', votantes: { $ne: huella } },
-            { $push: { votantes: huella }, $inc: { [campo]: 1 } },
+            { $push: { votantes: huella },$inc: { [campo]: 1 } },
             { returnDocument: 'after', projection: { votantes: 0 } }
         );
 

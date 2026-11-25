@@ -23,7 +23,7 @@ const Cercanas = {
 
     mostrar(lista) {
         const items = lista.map(a => {
-            const t = TIPOS[a.tipo] || { icono: 'map-pin', etiqueta: a.tipo };
+            const t = infoTipo(a.tipo);
             return `<button class="item-cercana" data-id="${esc(a._id)}">
                 <div class="item-cercana-tit">${iconoHtml(t.icono)}<span>${esc(a.descripcion)}</span></div>
                 <small>${esc(a.zona || 'Sin zona')} · ${hace(a.creado)}</small>

@@ -1,4 +1,5 @@
 const esMovil = () => window.matchMedia('(max-width: 640px)').matches;
+const MAX_CAMPOS_PROPIOS = 5;
 
 const Formulario = {
     punto: null,
@@ -45,7 +46,8 @@ const Formulario = {
 
     mostrarFormulario() {
         const opciones = Object.entries(TIPOS)
-            .map(([k, t]) => `<option value="${k}">${t.etiqueta}</option>`).join('');
+            .map(([k, t]) => `<option value="${k}">${t.etiqueta}</option>`).join('')
+            + '<option value="__otro">Otro (escribir manualmente)</option>';
 
         const ubicacion = esMovil()
             ? `<span id="f-coords"></span>
@@ -57,6 +59,9 @@ const Formulario = {
             <h2>${iconoHtml('file-plus-2')}<span>Nuevo reporte</span></h2>
             <form id="form-alerta">
                 <label>Tipo de incidente<select id="f-tipo">${opciones}</select></label>
+                <label id="f-otro-wrap" class="oculto">Nombre del incidente
+                    <input id="f-otro" type="text" maxlength="30" placeholder="Ej. Carrera de bicicletas">
+                </label>
                 <label>Descripción
                     <textarea id="f-desc" rows="3" maxlength="300" required placeholder="Describe brevemente lo que ocurre en la vía..."></textarea>
                 </label>
@@ -68,7 +73,17 @@ const Formulario = {
                     </select>
                 </label>
                 <label>Zona o referencia<input id="f-zona" type="text" maxlength="60" placeholder="Ej. Sopocachi, Av. 6 de Agosto"></label>
+
                 <div id="f-extra"></div>
+
+                <div class="extras-cab">
+                    <span>Campos adicionales (opcional)</span>
+                    <button type="button" id="f-mas" class="btn-mas" title="Agregar campo personalizado" aria-label="Agregar campo personalizado">
+                        ${iconoHtml('plus')}
+                    </button>
+                </div>
+                <div id="f-campos"></div>
+
                 <div class="ubicacion">${ubicacion}</div>
                 <button type="submit" class="btn">Publicar reporte</button>
             </form>
@@ -77,7 +92,12 @@ const Formulario = {
         this.dibujarExtras();
         this.actualizarCoords();
 
-        document.getElementById('f-tipo').addEventListener('change', () => this.dibujarExtras());
+        document.getElementById('f-tipo').addEventListener('change', () => this.alternarTipo());
+        document.getElementById('f-mas').addEventListener('click', () => this.agregarCampo());
+        document.getElementById('f-campos').addEventListener('click', e => {
+            const quitar = e.target.closest('.quitar-propio');
+            if (quitar) quitar.closest('.campo-propio').remove();
+        });
         document.getElementById('form-alerta').addEventListener('submit', e => this.enviar(e));
 
         const gps = document.getElementById('f-gps');
@@ -94,16 +114,38 @@ const Formulario = {
         };
     },
 
+    alternarTipo() {
+        const otro = document.getElementById('f-tipo').value === '__otro';
+        document.getElementById('f-otro-wrap').classList.toggle('oculto', !otro);
+        if (otro) document.getElementById('f-otro').focus();
+        this.dibujarExtras();
+    },
+
     dibujarExtras() {
         const tipo = document.getElementById('f-tipo').value;
-        const html = TIPOS[tipo].campos.map(c => {
+        const campos = TIPOS[tipo] ? TIPOS[tipo].campos : [];
+        document.getElementById('f-extra').innerHTML = campos.map(c => {
             const id = `x-${c.n}`;
             if (c.t === 'boolean') {
                 return `<label>${c.l}<select id="${id}"><option value="">Sin especificar</option><option value="true">Sí</option><option value="false">No</option></select></label>`;
             }
             return `<label>${c.l}<input id="${id}" type="${c.t === 'number' ? 'number' : 'text'}" ${c.t === 'number' ? 'min="0"' : ''}></label>`;
         }).join('');
-        document.getElementById('f-extra').innerHTML = html;
+    },
+
+    agregarCampo() {
+        const lista = document.getElementById('f-campos');
+        if (lista.children.length >= MAX_CAMPOS_PROPIOS) {
+            return toast(`Máximo ${MAX_CAMPOS_PROPIOS} campos adicionales`, true);
+        }
+        lista.insertAdjacentHTML('beforeend', `
+            <div class="campo-propio">
+                <input class="cp-titulo" type="text" maxlength="30" placeholder="Título (ej. Participantes)">
+                <input class="cp-valor" type="text" maxlength="200" placeholder="Contenido (ej. 50 personas)">
+                <button type="button" class="quitar-propio" title="Quitar campo" aria-label="Quitar campo">${iconoHtml('x')}</button>
+            </div>`);
+        renderIconos();
+        lista.lastElementChild.querySelector('.cp-titulo').focus();
     },
 
     actualizarCoords() {
@@ -153,7 +195,13 @@ const Formulario = {
         e.preventDefault();
         if (!this.punto) return toast('Selecciona la ubicación en el mapa o usa el GPS', true);
 
-        const tipo = document.getElementById('f-tipo').value;
+        const seleccion = document.getElementById('f-tipo').value;
+        let tipo = seleccion;
+        if (seleccion === '__otro') {
+            tipo = document.getElementById('f-otro').value.trim();
+            if (slug(tipo).length < 3) return toast('Escribe el nombre del incidente (mínimo 3 letras)', true);
+        }
+
         const datos = {
             tipo,
             descripcion: document.getElementById('f-desc').value,
@@ -162,11 +210,29 @@ const Formulario = {
             ubicacion: { lat: this.punto.lat, lng: this.punto.lng }
         };
 
-        TIPOS[tipo].campos.forEach(c => {
-            const v = document.getElementById(`x-${c.n}`).value.trim();
-            if (v === '') return;
-            datos[c.n] = c.t === 'number' ? Number(v) : c.t === 'boolean' ? v === 'true' : v;
-        });
+        if (TIPOS[seleccion]) {
+            TIPOS[seleccion].campos.forEach(c => {
+                const v = document.getElementById(`x-${c.n}`).value.trim();
+                if (v === '') return;
+                datos[c.n] = c.t === 'number' ? Number(v) : c.t === 'boolean' ? v === 'true' : v;
+            });
+        }
+
+        const usados = new Set();
+        for (const fila of document.querySelectorAll('.campo-propio')) {
+            const titulo = fila.querySelector('.cp-titulo').value.trim();
+            const valor = fila.querySelector('.cp-valor').value.trim();
+            if (!titulo && !valor) continue;
+            if (!titulo || !valor) return toast('Cada campo nuevo necesita título y contenido', true);
+
+            const clave = slug(titulo);
+            if (!/^[a-z]/.test(clave)) return toast(`El título "${titulo}" debe empezar con una letra`, true);
+            if (CAMPOS_BASE.includes(clave) || usados.has(clave)) {
+                return toast(`El título "${titulo}" está reservado o repetido`, true);
+            }
+            usados.add(clave);
+            datos[clave] = valor;
+        }
 
         try {
             await Api.crear(datos);
